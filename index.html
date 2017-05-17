@@ -50,15 +50,65 @@
 		var map;
 
 		function initMap(){
+			// Create stykes array to use with map
+			var styles = [
+				{
+					featureType: 'water',
+					stylers: [
+						{ color: '#19a0d8' }
+					]
+				},{
+					featureType: 'administrative',
+					elementType: 'labels.text.stroke',
+					stylers: [
+						{ color: '#ffffff' },
+						{ weight: 6 }
+					]
+				},{
+					featureType: 'administrative',
+					elementType: 'labels.text.fill',
+					stylers: [
+						{ color: '#e85113' }
+					]
+				},{
+					featureType: 'road.highway',
+					elementType: 'geometry.stroke',
+					stylers: [
+						{ color: '#efe9e4' },
+						{ lightness: -40 }
+					]
+				},{
+					featureType: 'transit.station',
+					stylers: [
+						{ weight: 9 },
+						{ hue: '#e85113'}
+					]
+				},{
+					featureType: 'road.highway',
+					elementType: 'labels.icons',
+					stylers: [
+						{ visibility: 'off' }
+					]
+				}
+			]
 			// Constructor creates a new map, only need lat/lng and zoom
 			map = new google.maps.Map(document.getElementById('map'), {
 				center: {lat: 50.827022, lng: -0.158278},
-				zoom: 12
+				zoom: 12,
+				styles: styles,
+				// turned off control as I have styled it a specicif way for a reason
+				mapTypeControl: false
 			});
 
 			var largeInfowindow = new google.maps.InfoWindow();
 
-			var bounds = new google.maps.LatLngBounds();
+			// style the markers a bit
+			var defaultIcon = makeMarkerIcon('0091ff');
+
+			// create highlighted marker icon on hover over
+			var highlightedIcon = makeMarkerIcon('FFFF24');
+
+			// var bounds = new google.maps.LatLngBounds();
 
 			var locations = [
 				{title: 'Sherbourne Road', location: {lat: 50.8514787, lng: -0.2010216}},
@@ -78,16 +128,24 @@
 					// map: map, // We now set this in the showHouses()
 					position: postion,
 					title: title,
+					icon: defaultIcon,
 					animation: google.maps.Animation.DROP,
 					id: i
 				});
 				// push the marker to our array of markers
 				markers.push(marker);
 				// extend the bounds of what is displayed on the map
-				bounds.extend(marker.position);
+				// bounds.extend(marker.position); // moved to the showHouses()
 				// create an onclick event to open an info window at each marker
 				marker.addListener('click', function(){
 					populateInfoWindow(this, largeInfowindow);
+				});
+				// Two event listeners - mouseover and mouseout to change colours
+				marker.addListener('mouseover', function(){
+					this.setIcon(highlightedIcon);
+				});
+				marker.addListener('mouseout', function(){
+					this.setIcon(defaultIcon);
 				});
 			}
 			// map.fitBounds(bounds); // won't set map bounds until we showHouses()
@@ -125,7 +183,18 @@
 			for (var i=0; i<markers.length; i++){
 				markers[i].setMap(null);
 			}
-		}		
+		}
+
+		// This function takes in a colour, and then creates a new marker icon of that colour. The icon will be 21px wide, 34px high, have an origin of 0, 0 and be anchored at 10, 34.
+		function makeMarkerIcon(markerColor){
+			var markerImage = new google.maps.MarkerImage(
+				'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|'+ markerColor +'|40|_|%E2%80%A2',
+				new google.maps.Size(21, 34),
+				new google.maps.Point(0, 0),
+				new google.maps.Point(10, 34),
+				new google.maps.Size(21, 34));
+			return markerImage;
+		}
 	</script>
 
 	<script async defer
