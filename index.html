@@ -12,25 +12,49 @@
 			padding: 0;
 		}
 		#map {
+			bottom: 0px;
 			height: 100vh;
+			left: 362px;
+			position: absolute;
+			right: 0px;
+
+		}
+
+		.options-box {
+			background: #fff;
+			border: 1px solid #999;
+			border-radius: 3px;
+			height: 100vh;
+			line-height: 35px;
+			padding: 10px 10px 30px 10px;
+			text-align: left;
+			width: 340px;
 		}
 	</style>
 </head>
 <body>
-
-	<div id="map"></div>
+	<div class="container">
+		<div class="options-box">
+			<h1>Places I have lived</h1>
+			<div>
+				<input id="show-houses" type="button" value="Show Houses">
+				<input id="hide-houses" type="button" value="Hide Houses">
+			</div>
+		</div>
+		<div id="map"></div>
+	</div>
 
 	<script>
 		
+		var markers = [];
+		var map;
+
 		function initMap(){
-			var map;
 			// Constructor creates a new map, only need lat/lng and zoom
 			map = new google.maps.Map(document.getElementById('map'), {
 				center: {lat: 50.827022, lng: -0.158278},
-				zoom: 14
+				zoom: 12
 			});
-			
-			var markers = [];
 
 			var largeInfowindow = new google.maps.InfoWindow();
 
@@ -51,7 +75,7 @@
 				var postion = locations[i].location;
 				var title = locations[i].title;
 				var marker = new google.maps.Marker({
-					map: map,
+					// map: map, // We now set this in the showHouses()
 					position: postion,
 					title: title,
 					animation: google.maps.Animation.DROP,
@@ -66,7 +90,10 @@
 					populateInfoWindow(this, largeInfowindow);
 				});
 			}
-			map.fitBounds(bounds);
+			// map.fitBounds(bounds); // won't set map bounds until we showHouses()
+
+			document.getElementById('show-houses').addEventListener('click', showHouses);
+			document.getElementById('hide-houses').addEventListener('click', hideHouses);
 		}
 
 		// This function populates the infowindow when the marker is clicked. Only allows one info window to open, and populates based on markers position.
@@ -82,6 +109,23 @@
 				})
 			}
 		}
+
+		// This function will loop through the markers array and display them all
+		function showHouses(){
+			var bounds = new google.maps.LatLngBounds();
+			// Extend the boundaries of the mapfor each marker and display the marker
+			for (var i=0; i<markers.length; i++){
+				markers[i].setMap(map);
+				bounds.extend(markers[i].position);
+			}
+			map.fitBounds(bounds);
+		}
+
+		function hideHouses(){
+			for (var i=0; i<markers.length; i++){
+				markers[i].setMap(null);
+			}
+		}		
 	</script>
 
 	<script async defer
