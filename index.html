@@ -30,6 +30,12 @@
 			text-align: left;
 			width: 340px;
 		}
+
+		#pano {
+	        width: 200px;
+	        height: 200px;
+	    }
+
 	</style>
 </head>
 <body>
@@ -96,19 +102,9 @@
 				center: {lat: 50.827022, lng: -0.158278},
 				zoom: 12,
 				styles: styles,
-				// turned off control as I have styled it a specicif way for a reason
+				// turned off control as I have styled it a specific way for a reason
 				mapTypeControl: false
 			});
-
-			var largeInfowindow = new google.maps.InfoWindow();
-
-			// style the markers a bit
-			var defaultIcon = makeMarkerIcon('0091ff');
-
-			// create highlighted marker icon on hover over
-			var highlightedIcon = makeMarkerIcon('FFFF24');
-
-			// var bounds = new google.maps.LatLngBounds();
 
 			var locations = [
 				{title: 'Sherbourne Road', location: {lat: 50.8514787, lng: -0.2010216}},
@@ -118,55 +114,97 @@
 				{title: 'Coronation Street', location: {lat: 50.8332678, lng: -0.1265189}},
 				{title: 'Cambridge Road', location: {lat: 50.826212, lng: -0.1593031}},
 				{title: 'Middle Street', location: {lat: 50.8215338, lng: -0.1453002}},
-				{title: 'Tivoli Cresc', location: {lat: 50.8427806, lng: -0.1600604}}
+				{title: 'Tivoli Crescent', location: {lat: 50.8427806, lng: -0.1600604}}
 			];
 
-			for (var i=0; i < locations.length; i++){
-				var postion = locations[i].location;
-				var title = locations[i].title;
-				var marker = new google.maps.Marker({
-					// map: map, // We now set this in the showHouses()
-					position: postion,
-					title: title,
-					icon: defaultIcon,
-					animation: google.maps.Animation.DROP,
-					id: i
-				});
-				// push the marker to our array of markers
-				markers.push(marker);
-				// extend the bounds of what is displayed on the map
-				// bounds.extend(marker.position); // moved to the showHouses()
-				// create an onclick event to open an info window at each marker
-				marker.addListener('click', function(){
-					populateInfoWindow(this, largeInfowindow);
-				});
-				// Two event listeners - mouseover and mouseout to change colours
-				marker.addListener('mouseover', function(){
-					this.setIcon(highlightedIcon);
-				});
-				marker.addListener('mouseout', function(){
-					this.setIcon(defaultIcon);
-				});
-			}
-			// map.fitBounds(bounds); // won't set map bounds until we showHouses()
+			var largeInfowindow = new google.maps.InfoWindow();
 
-			document.getElementById('show-houses').addEventListener('click', showHouses);
-			document.getElementById('hide-houses').addEventListener('click', hideHouses);
-		}
+
+        // Style the markers a bit. This will be our listing marker icon.
+        var defaultIcon = makeMarkerIcon('0091ff');
+
+        // Create a "highlighted location" marker color for when the user
+        // mouses over the marker.
+        var highlightedIcon = makeMarkerIcon('FFFF24');
+
+        // The following group uses the location array to create an array of markers on initialize.
+        for (var i = 0; i < locations.length; i++) {
+          // Get the position from the location array.
+          var position = locations[i].location;
+          var title = locations[i].title;
+          // Create a marker per location, and put into markers array.
+          var marker = new google.maps.Marker({
+            position: position,
+            title: title,
+            animation: google.maps.Animation.DROP,
+            icon: defaultIcon,
+            id: i
+          });
+          // Push the marker to our array of markers.
+          markers.push(marker);
+          // Create an onclick event to open the large infowindow at each marker.
+          marker.addListener('click', function() {
+            populateInfoWindow(this, largeInfowindow);
+          });
+          // Two event listeners - one for mouseover, one for mouseout,
+          // to change the colors back and forth.
+          marker.addListener('mouseover', function() {
+            this.setIcon(highlightedIcon);
+          });
+          marker.addListener('mouseout', function() {
+            this.setIcon(defaultIcon);
+          });
+        }
+
+        document.getElementById('show-houses').addEventListener('click', showHouses);
+        document.getElementById('hide-houses').addEventListener('click', hideHouses);
+
+      }
+
 
 		// This function populates the infowindow when the marker is clicked. Only allows one info window to open, and populates based on markers position.
-		function populateInfoWindow(marker, infowindow){
-			// check to make sure infowindow is not already open
-			if (infowindow.marker != marker) {
-				infowindow.marker = marker;
-				infowindow.setContent('<div>' + marker.title + '</div>');
-				infowindow.open(map, marker);
-				// make sure the marker property is cleared if the infowindow is closed
-				Infowindow.addListener('closeclick', function(){
-					infowindow.setMarker(null);
-				})
-			}
-		}
+		function populateInfoWindow(marker, infowindow) {
+        // Check to make sure the infowindow is not already opened on this marker.
+        if (infowindow.marker != marker) {
+          // Clear the infowindow content to give the streetview time to load.
+          infowindow.setContent('');
+          infowindow.marker = marker;
+          // Make sure the marker property is cleared if the infowindow is closed.
+          infowindow.addListener('closeclick', function() {
+            infowindow.marker = null;
+          });
+          var streetViewService = new google.maps.StreetViewService();
+          var radius = 50;
+          // In case the status is OK, which means the pano was found, compute the
+          // position of the streetview image, then calculate the heading, then get a
+          // panorama from that and set the options
+          function getStreetView(data, status) {
+            if (status == google.maps.StreetViewStatus.OK) {
+              var nearStreetViewLocation = data.location.latLng;
+              var heading = google.maps.geometry.spherical.computeHeading(
+                nearStreetViewLocation, marker.position);
+                infowindow.setContent('<div>' + marker.title + '</div><div id="pano"></div>');
+                var panoramaOptions = {
+                  position: nearStreetViewLocation,
+                  pov: {
+                    heading: heading,
+                    pitch: 30
+                  }
+                };
+              var panorama = new google.maps.StreetViewPanorama(
+                document.getElementById('pano'), panoramaOptions);
+            } else {
+              infowindow.setContent('<div>' + marker.title + '</div>' +
+                '<div>No Street View Found</div>');
+            }
+          }
+          // Use streetview service to get the closest streetview image within
+          // 50 meters of the markers position
+          streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
+          // Open the infowindow on the correct marker.
+          infowindow.open(map, marker);
+        }
+      }
 
 		// This function will loop through the markers array and display them all
 		function showHouses(){
@@ -198,7 +236,7 @@
 	</script>
 
 	<script async defer
-     src="https://maps.googleapis.com/maps/api/js?v=3&key=AIzaSyAoEnMQe4ZX1tFEinO8c3XUHt7AHO0ipEM&callback=initMap">
+     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoEnMQe4ZX1tFEinO8c3XUHt7AHO0ipEM&libraries=geometry&v=3&callback=initMap">
     </script>
 </body>
 </html>
