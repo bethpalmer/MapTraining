@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Maps Training</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<style>
+		html,
+		body {
+			font-family: Arial, sans-serif;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+		#map {
+			bottom: 0px;
+			height: 100vh;
+			left: 362px;
+			position: absolute;
+			right: 0px;
+		}
+		.options-box {
+			background: #fff;
+			border: 1px solid #999;
+			border-radius: 3px;
+			height: 100vh;
+			line-height: 35px;
+			padding: 10px 10px 30px 10px;
+			text-align: left;
+			width: 340px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="options-box">
+			<h1>Places I have lived</h1>
+			<div>
+				<input id="show-houses" type="button" value="Show Houses">
+				<input id="hide-houses" type="button" value="Hide Houses">
+			</div>
+		</div>
+		<div id="map"></div>
+	</div>
+
+	<script>
+		
+		var markers = [];
+		var map;
+		var locations = [
+			{
+				area: "West",
+				locations: [
+					{title: 'Sherbourne Road', location: {lat: 50.8514787, lng: -0.2010216}},
+					{title: 'Adur Drive', location: {lat: 50.8360303, lng: -0.265268}},
+					{title: 'Wilbury Road', location: {lat: 50.8325629, lng: -0.1669776}},
+					{title: 'Cambridge Road', location: {lat: 50.826212, lng: -0.1593031}},
+					{title: 'Tivoli Cresc', location: {lat: 50.8427806, lng: -0.1600604}}
+				]
+			},
+			{
+				area: "East",
+				locations: [
+					{title: 'New Road', location: {lat: 50.874511, lng: 0.0061245}},
+					{title: 'Coronation Street', location: {lat: 50.8332678, lng: -0.1265189}},
+					{title: 'Middle Street', location: {lat: 50.8215338, lng: -0.1453002}}
+				]
+			}
+		];
+
+		console.log(locations[1]);
+		console.log(locations[0].locations[0].location);
+		
+		var objectArray = []; // 2 arrays of locations objects
+
+		// for (var i=0; i<locations.length; i++){
+		// 	var object = locations[i].locations;
+		// 	objectArray.push(object);
+		// }
+		// console.log(objectArray[0]);
+
+		for (var i=0; i<locations.length; i++){
+			var object = locations[i].locations;
+			objectArray.push(object);
+		};
+
+		console.log(objectArray); // LOGS : (2) [Array(5), Array(3)]
+
+		var west = objectArray[0];
+
+		var east = objectArray[1];
+
+		// console.log(placesArray0);
+
+
+		for (var i=0; i<west.length; i++){
+			console.log(west[i].title);
+		}
+
+		for (var i=0; i<east.length; i++){
+			console.log(east[i].title);
+		}
+
+		function initMap(){
+			// Constructor creates a new map, only need lat/lng and zoom
+			map = new google.maps.Map(document.getElementById('map'), {
+				center: {lat: 50.827022, lng: -0.158278},
+				zoom: 12
+			});
+			var largeInfowindow = new google.maps.InfoWindow();
+			var bounds = new google.maps.LatLngBounds();
+			
+			for (var i=0; i < west.length; i++){
+				var postion = west[i].location;
+				var title = west[i].title;
+				var marker = new google.maps.Marker({
+					map: map,
+					position: postion,
+					title: title,
+					animation: google.maps.Animation.DROP,
+					id: i
+				});
+				markers.push(marker);
+				bounds.extend(marker.position);
+				marker.addListener('click', function(){
+					populateInfoWindow(this, largeInfowindow);
+				});
+			}
+			// map.fitBounds(bounds); // won't set map bounds until we showHouses()
+			document.getElementById('show-houses').addEventListener('click', showHouses);
+			document.getElementById('hide-houses').addEventListener('click', hideHouses);
+		}
+		// This function populates the infowindow when the marker is clicked. Only allows one info window to open, and populates based on markers position.
+		function populateInfoWindow(marker, infowindow){
+			// check to make sure infowindow is not already open
+			if (infowindow.marker != marker) {
+				infowindow.marker = marker;
+				infowindow.setContent('<div>' + marker.title + '</div>');
+				infowindow.open(map, marker);
+				// make sure the marker property is cleared if the infowindow is closed
+				Infowindow.addListener('closeclick', function(){
+					infowindow.setMarker(null);
+				})
+			}
+		}
+		// This function will loop through the markers array and display them all
+		function showHouses(){
+			var bounds = new google.maps.LatLngBounds();
+			// Extend the boundaries of the mapfor each marker and display the marker
+			for (var i=0; i<markers.length; i++){
+				markers[i].setMap(map);
+				bounds.extend(markers[i].position);
+			}
+			map.fitBounds(bounds);
+		}
+		function hideHouses(){
+			for (var i=0; i<markers.length; i++){
+				markers[i].setMap(null);
+			}
+		};	
+	</script>
+
+	<script async defer
+     src="https://maps.googleapis.com/maps/api/js?v=3&key=AIzaSyAoEnMQe4ZX1tFEinO8c3XUHt7AHO0ipEM&callback=initMap">
+    </script>
+</body>
+</html>
+Contact GitHub API Training Shop Blog About
+© 2017 GitHub, Inc. Terms Privacy Security Status Help

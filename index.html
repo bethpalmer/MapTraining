@@ -338,7 +338,7 @@
           // on it and zoom in
           geocoder.geocode(
             { address: address,
-              componentRestrictions: {locality: 'Brighton, East Sussex'}
+              componentRestrictions: {locality: 'Brighton and Hove'}
             }, function(results, status) {
               if (status == google.maps.GeocoderStatus.OK) {
                 map.setCenter(results[0].geometry.location);
